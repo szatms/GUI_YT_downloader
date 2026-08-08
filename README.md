@@ -10,7 +10,7 @@ A simple tool to download YouTube videos in MP3 or MP4 format.
 
 ## Usage
 
-Run the GUI version with:
+Run with:
 ```bash
 ./start.sh
 ```
