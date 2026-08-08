@@ -18,10 +18,14 @@ Run with:
 ## Features
 
 - Download YouTube videos in MP3 (audio) or MP4 (video) format
-- Download entire playlists
+- Download entire playlists -- currently buggy/not working
 - Progress indication during download
 - Simple GUI interface for non-technical users
 - Automatic virtual environment setup
 - Download location selection
 - Visual feedback on download completion
 - Default system downloads folder
+
+## Coming soon
+- Fixes for currently known bugs
+- Starter script for Windows users
