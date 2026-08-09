@@ -25,7 +25,11 @@ class DownloadThread(QThread):
 
     def __init__(self, url, format_type, output_dir, is_playlist=False):
         super().__init__()
-        self.url = self.sanitize_url(url)
+        # Only sanitize URL if not in playlist mode to preserve playlist parameters
+        if is_playlist:
+            self.url = url  # Don't sanitize when playlist mode is enabled
+        else:
+            self.url = self.sanitize_url(url)
         self.format_type = format_type
         self.output_dir = output_dir
         self.is_playlist = is_playlist
@@ -66,21 +70,14 @@ class DownloadThread(QThread):
                 bufsize=1
             )
             
-            # Parse progress
+            # Just pass through the output to show basic status
             for line in process.stdout:
                 logging.debug(f"Process output: {line.strip()}")
-                if "ETA" in line:
-                    # Extract percentage from progress line
-                    try:
-                        # Look for percentage in the line
-                        import re
-                        match = re.search(r'(\d+)%', line)
-                        if match:
-                            percentage = int(match.group(1))
-                            self.download_progress.emit(percentage)
-                    except Exception as e:
-                        logging.error(f"Error parsing progress: {e}")
-            
+                # We'll just show a simple status line for download activity
+                if "[download]" in line and ("ETA" in line or "100%" in line):
+                    # Show when download starts and completes
+                    self.download_progress.emit(0)  # Emit dummy signal to trigger update
+                    
             process.wait()
             logging.info(f"Process finished with return code: {process.returncode}")
             if process.returncode != 0:
@@ -161,23 +158,18 @@ class YouTubeDownloader(QWidget):
         self.download_btn.clicked.connect(self.start_download)
         layout.addWidget(self.download_btn)
         
-        # Progress bar
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        layout.addWidget(self.progress_bar)
-        
         # Status label
         self.status_label = QLabel("")
         layout.addWidget(self.status_label)
         
-        # Visual feedback area
-        self.feedback_label = QLabel("")
-        self.feedback_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.feedback_label.setStyleSheet("QLabel { font-size: 48px; }")
-        self.feedback_label.setVisible(False)  # Hidden by default
-        layout.addWidget(self.feedback_label)
+        # Terminal-style status box
+        self.status_box = QTextEdit()
+        self.status_box.setReadOnly(True)
+        self.status_box.setMaximumHeight(150)
+        self.status_box.setStyleSheet("QTextEdit { background-color: #303030; color: white; font-family: monospace; }")
+        layout.addWidget(self.status_box)
         
-        # Add stretch to push feedback to bottom
+        # Add stretch to push status box to bottom
         layout.addStretch()
         
         self.setLayout(layout)
@@ -207,9 +199,10 @@ class YouTubeDownloader(QWidget):
         is_playlist = self.playlist_checkbox.isChecked()
         
         self.download_btn.setEnabled(False)
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setValue(0)
-        self.status_label.setText("Starting download...")
+        self.status_box.clear()
+        self.status_box.append("Starting download...")
+        self.status_box.append(f"URL: {url}")
+        self.status_box.append("Status: Started")
         
         # Create and start download thread
         self.download_thread = DownloadThread(url, format_type, self.output_dir, is_playlist)
@@ -219,29 +212,21 @@ class YouTubeDownloader(QWidget):
         self.download_thread.start()
         
     def update_progress(self, percentage):
-        self.progress_bar.setValue(percentage)
-        self.status_label.setText(f"Downloading... {percentage}%")
+        # Show download status messages
+        self.status_box.append("Status: Downloading...")
         
     def download_completed(self, message):
-        self.status_label.setText(message)
+        self.status_box.append("Status: Done")
+        self.status_box.append(message)
         self.download_btn.setEnabled(True)
-        self.progress_bar.setVisible(False)
-        
-        # Show visual feedback (green tick)
-        self.feedback_label.setText("✅")
-        self.feedback_label.setVisible(True)
-        
-        # Hide the feedback after 3 seconds
-        from PyQt6.QtCore import QTimer
-        QTimer.singleShot(3000, self.hide_feedback)
         
     def hide_feedback(self):
-        self.feedback_label.setVisible(False)
+        pass
         
     def download_error(self, error_message):
-        self.status_label.setText(f"Error: {error_message}")
+        self.status_box.append("Status: Error")
+        self.status_box.append(f"Error: {error_message}")
         self.download_btn.setEnabled(True)
-        self.progress_bar.setVisible(False)
         logging.error(f"Download error: {error_message}")
         QMessageBox.critical(self, "Error", error_message)
 

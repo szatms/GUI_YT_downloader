@@ -6,14 +6,39 @@ A simple tool to download YouTube videos in MP3 or MP4 format.
 
 - Python 3
 - yt-dlp installed on your system
+- ffmpeg (for audio conversion)
 - PyQt6 (for GUI version)
+
+## Installing ffmpeg
+
+### Debian/Ubuntu:
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+### Arch Linux:
+```bash
+sudo pacman -S ffmpeg
+```
+
+### macOS:
+```bash
+brew install ffmpeg
+```
+
+### Windows:
+Download from [https://www.gyan.dev/ffmpeg/builds/](https://www.gyan.dev/ffmpeg/builds/) and add to your PATH.
 
 ## Usage
 
-Run with:
+### Linux/macOS:
 ```bash
 ./start.sh
 ```
+
+### Windows:
+Double-click `start.bat` or run it from Command Prompt.
 
 ## Features
 
@@ -28,4 +53,4 @@ Run with:
 
 ## Coming soon
 - Fixes for currently known bugs
-- Starter script for Windows users
+- ✅ Starter script for Windows users
